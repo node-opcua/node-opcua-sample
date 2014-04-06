@@ -17,6 +17,6 @@
   "license": "MIT",
   "dependencies": {
     "async": "~0.2.10",
-    "node-opcua": "0.0.5"
+    "node-opcua": "0.0.9"
   }
 }
