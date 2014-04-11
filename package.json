@@ -1,6 +1,6 @@
 {
   "name": "node-opcua-sample",
-  "version": "0.0.0",
+  "version": "0.0.10",
   "description": "Simple OPCUA  client using node-opcua",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "Etienne Rossignon",
   "license": "MIT",
   "dependencies": {
-    "async": "~0.2.10",
-    "node-opcua": "0.0.5"
+    "async": "~0.7.0",
+    "node-opcua": "0.0.11"
   }
 }
