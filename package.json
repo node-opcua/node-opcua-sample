@@ -1,10 +1,18 @@
 {
   "name": "node-opcua-sample",
+<<<<<<< HEAD
   "version": "0.0.11",
+=======
+  "version": "0.0.1",
+>>>>>>> 9efa2761514b8211ac094da4b20131a1007c2228
   "description": "Simple OPCUA  client using node-opcua",
-  "main": "index.js",
+  "main": "simple_client.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/erossignon/node-opcua-sample.git"
   },
   "keywords": [
     "opcua"

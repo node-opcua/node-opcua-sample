@@ -1,4 +1,5 @@
-.ideea
+.idea
 node_modules
 temp
 tmp
+*.swp
