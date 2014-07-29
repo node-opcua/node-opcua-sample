@@ -5,9 +5,10 @@ var async = require("async");
 
 var client = new opcua.OPCUAClient();
 
-var endpointUrl = "opc.tcp://" + require("os").hostname() + ":4841";
+var endpointUrl = "opc.tcp://" + require("os").hostname() + ":1234";
 
 var the_session = null;
+var dataValue;
 async.series([
     // step 1 : connect to
     function(callback)  {
@@ -46,60 +47,88 @@ async.series([
     function(callback) {
         the_session.readVariableValue("ns=2;s=Furnace_1.Temperature", function(err,dataValues,diagnostics) {
             if (!err) {
-                console.log(" temperature = " , dataValues[0].value.value);
+                console.log(" temperature = " , dataValue=dataValues[0].value.value);
             }
             callback(err);
         })
     },
+    // step 5 : write a variable
+    function(callback) {
+        the_session.writeSingleNode("ns=2;s=Furnace_1.Temperature", { dataType: opcua.DataType.Double, value: dataValue+=1 }, function(err,statusCode) {
+            if (!err) {
+                console.log(" wrote to Furnace_1.Temperature = " , dataValue, statusCode);
+            }
+            callback(err);
+        });
+    },
 
-    // step 5: install a subscription and monitored item
+    // step 6: install a subscription and monitored item while writing to the item
     //
     // -----------------------------------------
-    // create subscription
     function(callback) {
+        async.parallel(
+            [
+                // create subscription
+                function(callback) {
 
-        the_subscription=new opcua.ClientSubscription(the_session,{
-            requestedPublishingInterval: 1000,
-            requestedLifetimeCount: 10,
-            requestedMaxKeepAliveCount: 2,
-            maxNotificationsPerPublish: 10,
-            publishingEnabled: true,
-            priority: 10
-        });
-        the_subscription.on("started",function(){
-            console.log("subscription started for 2 seconds - subscriptionId=",the_subscription.subscriptionId);
-        }).on("keepalive",function(){
-            console.log("keepalive");
-        }).on("terminated",function(){
-            callback();
-        });
-        setTimeout(function(){
-            the_subscription.terminate();
-        },10000);
+                    the_subscription=new opcua.ClientSubscription(the_session,{
+                        requestedPublishingInterval: 1000,
+                        requestedLifetimeCount: 10,
+                        requestedMaxKeepAliveCount: 2,
+                        maxNotificationsPerPublish: 10,
+                        publishingEnabled: true,
+                        priority: 10
+                    });
+                    the_subscription.on("started",function(){
+                        console.log("subscription started for 10 seconds - subscriptionId=",the_subscription.subscriptionId);
+                    }).on("keepalive",function(){
+                        console.log("keepalive");
+                    }).on("terminated",function(){
+                        callback();
+                    });
+                    setTimeout(function(){
+                        the_subscription.terminate();
+                    },10000);
 
 
-        // install monitored item
-        //
-        var monitoredItem  = the_subscription.monitor({
-            nodeId: opcua.resolveNodeId("ns=2;s=Furnace_1.Temperature"),
-            attributeId: 13
-          //, dataEncoding: { namespaceIndex: 0, name:null }
-        },
-        { 
-            samplingInterval: 100,
-            discardOldest: true,
-            queueSize: 10 
-        });
-        console.log("-------------------------------------");
+                    // install monitored item
+                    //
+                    var monitoredItem  = the_subscription.monitor({
+                        nodeId: opcua.resolveNodeId("ns=2;s=Furnace_1.Temperature"),
+                        attributeId: 13
+                      //, dataEncoding: { namespaceIndex: 0, name:null }
+                    },
+                    { 
+                        samplingInterval: 100,
+                        discardOldest: true,
+                        queueSize: 10 
+                    });
+                    console.log("-------------------------------------");
 
-        // subscription.on("item_added",function(monitoredItem){
-        //xx monitoredItem.on("initialized",function(){ });
-        //xx monitoredItem.on("terminated",function(value){ });
-        
+                    // subscription.on("item_added",function(monitoredItem){
+                    //xx monitoredItem.on("initialized",function(){ });
+                    //xx monitoredItem.on("terminated",function(value){ });
+                    
 
-        monitoredItem.on("changed",function(value){
-           console.log(" New Value = ",value.toString());
-        });
+                    monitoredItem.on("changed",function(value){
+                       console.log(" New Value = ",value.toString());
+                    });
+
+                },
+
+                function(callback) {
+                    setTimeout( function(){
+                        the_session.writeSingleNode("ns=2;s=Furnace_1.Temperature", { dataType: opcua.DataType.Double, value: dataValue+=1 }, function(err,statusCode) {
+                            if (!err) {
+                                console.log(" wrote to Furnace_1.Temperature = " , dataValue, statusCode);
+                            }
+                            callback(err);
+                        });
+                    },3000);
+                },
+
+
+            ], callback);
 
     },
 
