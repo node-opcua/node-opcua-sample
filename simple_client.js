@@ -9,9 +9,13 @@ var endpointUrl = "opc.tcp://" + require("os").hostname() + ":4841";
 
 var the_session = null;
 async.series([
+
+
     // step 1 : connect to
     function(callback)  {
+
         client.connect(endpointUrl,function (err) {
+
             if(err) {
                 console.log(" cannot connect to endpoint :" , endpointUrl );
             } else {
@@ -44,9 +48,9 @@ async.series([
     },
     // step 4 : read a variable
     function(callback) {
-        the_session.readVariableValue("ns=2;s=Furnace_1.Temperature", function(err,dataValues,diagnostics) {
+        the_session.readVariableValue("ns=3;s=Furnace_1.Temperature", function(err,dataValue) {
             if (!err) {
-                console.log(" temperature = " , dataValues[0].value.value);
+                console.log(" temperature = " , dataValue.toString());
             }
             callback(err);
         })
@@ -81,7 +85,7 @@ async.series([
         // install monitored item
         //
         var monitoredItem  = the_subscription.monitor({
-            nodeId: opcua.resolveNodeId("ns=2;s=Furnace_1.Temperature"),
+            nodeId: opcua.resolveNodeId("ns=3;s=Furnace_1.Temperature"),
             attributeId: 13
           //, dataEncoding: { namespaceIndex: 0, name:null }
         },
