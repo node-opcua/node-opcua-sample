@@ -16,7 +16,7 @@
   "author": "Etienne Rossignon",
   "license": "MIT",
   "dependencies": {
-    "async": "~2.1.2",
+    "async": "~2.1.4",
     "node-opcua": "~0.0.60"
   }
 }
