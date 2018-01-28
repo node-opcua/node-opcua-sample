@@ -5,7 +5,7 @@ var async = require("async");
 
 var client = new opcua.OPCUAClient();
 
-var endpointUrl = "opc.tcp://" + require("os").hostname() + ":4841";
+var endpointUrl = "opc.tcp://" + require("os").hostname() + ":48010";
 
 var the_session = null;
 async.series([
@@ -37,9 +37,9 @@ async.series([
     // step 3 : browse
     function(callback) {
 
-        the_session.browse("RootFolder", function(err,browse_result,diagnostics){
+        the_session.browse("RootFolder", function(err,browse_result){
             if(!err) {
-                browse_result[0].references.forEach(function(reference) {
+                browse_result.references.forEach(function(reference) {
                     console.log( reference.browseName);
                 });
             }
@@ -86,7 +86,7 @@ async.series([
         //
         var monitoredItem  = the_subscription.monitor({
             nodeId: opcua.resolveNodeId("ns=3;s=Furnace_1.Temperature"),
-            attributeId: 13
+            attributeId: opcua.AttributeIds.Value 
           //, dataEncoding: { namespaceIndex: 0, name:null }
         },
         { 
