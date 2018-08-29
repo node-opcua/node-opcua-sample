@@ -1,13 +1,22 @@
-const opcua = require("node-opcua");
+import {
+    resolveNodeId,
+    AttributeIds,
+    OPCUAClient,
+    ClientSubscription,
+    DataValue,
+    BrowseResult,
+    ReferenceDescription
+} from "node-opcua";
 
 const endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
-const nodeId = "ns=1;s=Temperature";
+
+const nodeId = resolveNodeId("ns=1;s=Temperature");
 
 async function main() {
 
     try {
 
-        const client = new opcua.OPCUAClient({
+        const client = new OPCUAClient({
             connectionStrategy: {
                 maxRetry: 2,
                 initialDelay: 2000,
@@ -21,15 +30,15 @@ async function main() {
 
         const session = await client.createSession();
 
-        const browseResult = await session.browse("RootFolder");
+        const browseResult: BrowseResult = await session.browse("RootFolder") as BrowseResult;
 
-        console.log(browseResult.references.map((r)=>r.browseName.toString()).join("\n"));
+        console.log(browseResult.references.map((r: ReferenceDescription) => r.browseName.toString()).join("\n"));
 
-        const dataValue = await session.read({nodeId: nodeId, attributeId: opcua.AttributeIds.Value});
-        console.log(` temperature = ${dataValue.value.value.toString()}`);
+        const dataValue = await session.read({nodeId, attributeId: AttributeIds.Value});
+        console.log(` temperature = ${dataValue.value.toString()}`);
 
         // step 5: install a subscription and monitored item
-        const subscription = new opcua.ClientSubscription(session, {
+        const subscription = new ClientSubscription(session, {
             requestedPublishingInterval: 1000,
             requestedLifetimeCount: 10,
             requestedMaxKeepAliveCount: 2,
@@ -40,22 +49,23 @@ async function main() {
 
         subscription
             .on("started", () => console.log("subscription started - subscriptionId=", subscription.subscriptionId))
-            .on("keepalive",() => console.log("keepalive"))
+            .on("keepalive", () => console.log("keepalive"))
             .on("terminated", () => console.log("subscription terminated"));
 
-
         const monitoredItem = subscription.monitor({
-                nodeId: nodeId,
-                attributeId: opcua.AttributeIds.Value
+                nodeId,
+                attributeId: AttributeIds.Value
             },
             {
-                samplingInterval: 1000,
+                samplingInterval: 100,
                 discardOldest: true,
                 queueSize: 10
             });
 
 
-        monitoredItem.on("changed", (dataValue) => console.log(` Temperature = ${dataValue.value.value.toString()}`));
+        monitoredItem.on("changed", (dataValue: DataValue) => {
+            console.log(` Temperature = ${dataValue.value.value.toString()}`)
+        });
 
         await new Promise((resolve) => setTimeout(resolve, 10000));
 

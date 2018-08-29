@@ -5,7 +5,8 @@ var async = require("async");
 
 var client = new opcua.OPCUAClient();
 
-var endpointUrl = "opc.tcp://" + require("os").hostname() + ":48010";
+var endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
+var nodeId = "ns=1;s=Temperature";
 
 var the_session = null;
 async.series([
@@ -48,7 +49,7 @@ async.series([
     },
     // step 4 : read a variable
     function(callback) {
-        the_session.readVariableValue("ns=3;s=Furnace_1.Temperature", function(err,dataValue) {
+        the_session.readVariableValue(nodeId, function(err,dataValue) {
             if (!err) {
                 console.log(" temperature = " , dataValue.toString());
             }
@@ -85,7 +86,7 @@ async.series([
         // install monitored item
         //
         var monitoredItem  = the_subscription.monitor({
-            nodeId: opcua.resolveNodeId("ns=3;s=Furnace_1.Temperature"),
+            nodeId: opcua.resolveNodeId(nodeId),
             attributeId: opcua.AttributeIds.Value 
           //, dataEncoding: { namespaceIndex: 0, name:null }
         },
