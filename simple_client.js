@@ -3,7 +3,7 @@
 var opcua = require("node-opcua");
 var async = require("async");
 
-var client = new opcua.OPCUAClient();
+const client = opcua.OPCUAClient.create({});
 
 var endpointUrl = "opc.tcp://" + require("os").hostname() + ":48010";
 
