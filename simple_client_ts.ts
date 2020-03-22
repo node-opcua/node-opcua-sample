@@ -17,6 +17,7 @@ async function main() {
     try {
 
         const client = new OPCUAClient({
+            endpoint_must_exist: false,
             connectionStrategy: {
                 maxRetry: 2,
                 initialDelay: 2000,
@@ -34,7 +35,7 @@ async function main() {
 
         console.log(browseResult.references.map((r: ReferenceDescription) => r.browseName.toString()).join("\n"));
 
-        const dataValue = await session.read({nodeId, attributeId: AttributeIds.Value});
+        const dataValue = await session.read({ nodeId, attributeId: AttributeIds.Value });
         console.log(` temperature = ${dataValue.value.toString()}`);
 
         // step 5: install a subscription and monitored item
@@ -53,9 +54,9 @@ async function main() {
             .on("terminated", () => console.log("subscription terminated"));
 
         const monitoredItem = subscription.monitor({
-                nodeId,
-                attributeId: AttributeIds.Value
-            },
+            nodeId,
+            attributeId: AttributeIds.Value
+        },
             {
                 samplingInterval: 100,
                 discardOldest: true,

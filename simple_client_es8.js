@@ -1,4 +1,8 @@
-const opcua = require("node-opcua");
+const {
+    OPCUAClient,
+    ClientSubscription,
+    AttributeIds
+} = require("node-opcua");
 
 const endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
 const nodeId = "ns=1;s=Temperature";
@@ -7,7 +11,8 @@ async function main() {
 
     try {
 
-        const client = new opcua.OPCUAClient({
+        const client = new OPCUAClient({
+            endpoint_must_exist: false,
             connectionStrategy: {
                 maxRetry: 2,
                 initialDelay: 2000,
@@ -23,13 +28,13 @@ async function main() {
 
         const browseResult = await session.browse("RootFolder");
 
-        console.log(browseResult.references.map((r)=>r.browseName.toString()).join("\n"));
+        console.log(browseResult.references.map((r) => r.browseName.toString()).join("\n"));
 
-        const dataValue = await session.read({nodeId: nodeId, attributeId: opcua.AttributeIds.Value});
+        const dataValue = await session.read({ nodeId: nodeId, attributeId: AttributeIds.Value });
         console.log(` temperature = ${dataValue.value.value.toString()}`);
 
         // step 5: install a subscription and monitored item
-        const subscription = new opcua.ClientSubscription(session, {
+        const subscription = new ClientSubscription(session, {
             requestedPublishingInterval: 1000,
             requestedLifetimeCount: 10,
             requestedMaxKeepAliveCount: 2,
@@ -40,14 +45,14 @@ async function main() {
 
         subscription
             .on("started", () => console.log("subscription started - subscriptionId=", subscription.subscriptionId))
-            .on("keepalive",() => console.log("keepalive"))
+            .on("keepalive", () => console.log("keepalive"))
             .on("terminated", () => console.log("subscription terminated"));
 
 
         const monitoredItem = subscription.monitor({
-                nodeId: nodeId,
-                attributeId: opcua.AttributeIds.Value
-            },
+            nodeId: nodeId,
+            attributeId: AttributeIds.Value
+        },
             {
                 samplingInterval: 1000,
                 discardOldest: true,
@@ -68,6 +73,7 @@ async function main() {
     }
     catch (err) {
         console.log("Error !!!", err);
+        process.exit();
     }
 }
 

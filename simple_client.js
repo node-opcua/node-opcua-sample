@@ -1,24 +1,30 @@
 
 
-var opcua = require("node-opcua");
-var async = require("async");
+const {
+    OPCUAClient,
+    resolveNodeId,
+    AttributeIds,
+    ClientSubscription
+} = require("node-opcua");
+const async = require("async");
 
-var client = new opcua.OPCUAClient();
+const client = new OPCUAClient({ endpoint_must_exist: false });
 
-var endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
-var nodeId = "ns=1;s=Temperature";
+const endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
+const nodeId = "ns=1;s=Temperature";
 
-var the_session = null;
+let theSession = null;
+let theSubscription = null;
 async.series([
 
 
     // step 1 : connect to
-    function(callback)  {
+    function(callback) {
 
-        client.connect(endpointUrl,function (err) {
+        client.connect(endpointUrl, function(err) {
 
-            if(err) {
-                console.log(" cannot connect to endpoint :" , endpointUrl );
+            if (err) {
+                console.log(" cannot connect to endpoint :", endpointUrl);
             } else {
                 console.log("connected !");
             }
@@ -27,9 +33,9 @@ async.series([
     },
     // step 2 : createSession
     function(callback) {
-        client.createSession( function(err,session) {
-            if(!err) {
-                the_session = session;
+        client.createSession(function(err, session) {
+            if (!err) {
+                theSession = session;
             }
             callback(err);
         });
@@ -38,10 +44,10 @@ async.series([
     // step 3 : browse
     function(callback) {
 
-        the_session.browse("RootFolder", function(err,browse_result){
-            if(!err) {
+        theSession.browse("RootFolder", function(err, browse_result) {
+            if (!err) {
                 browse_result.references.forEach(function(reference) {
-                    console.log( reference.browseName);
+                    console.log(reference.browseName);
                 });
             }
             callback(err);
@@ -49,9 +55,9 @@ async.series([
     },
     // step 4 : read a variable
     function(callback) {
-        the_session.readVariableValue(nodeId, function(err,dataValue) {
+        theSession.readVariableValue(nodeId, function(err, dataValue) {
             if (!err) {
-                console.log(" temperature = " , dataValue.toString());
+                console.log(" temperature = ", dataValue.toString());
             }
             callback(err);
         })
@@ -63,47 +69,45 @@ async.series([
     // create subscription
     function(callback) {
 
-        the_subscription=new opcua.ClientSubscription(the_session,{
+        theSubscription = new ClientSubscription(theSession, {
             requestedPublishingInterval: 1000,
-            requestedLifetimeCount: 10,
-            requestedMaxKeepAliveCount: 2,
+            requestedLifetimeCount: 1000,
+            requestedMaxKeepAliveCount: 20,
             maxNotificationsPerPublish: 10,
             publishingEnabled: true,
             priority: 10
         });
-        the_subscription.on("started",function(){
-            console.log("subscription started for 2 seconds - subscriptionId=",the_subscription.subscriptionId);
-        }).on("keepalive",function(){
+        theSubscription.on("started", function() {
+            console.log("subscription started for 2 seconds - subscriptionId=", theSubscription.subscriptionId);
+        }).on("keepalive", function() {
             console.log("keepalive");
-        }).on("terminated",function(){
+        }).on("terminated", function() {
             callback();
         });
-        setTimeout(function(){
-            the_subscription.terminate();
-        },10000);
+
+
+
+        setTimeout(function() {
+            theSubscription.terminate();
+        }, 10000);
 
 
         // install monitored item
         //
-        var monitoredItem  = the_subscription.monitor({
-            nodeId: opcua.resolveNodeId(nodeId),
-            attributeId: opcua.AttributeIds.Value 
-          //, dataEncoding: { namespaceIndex: 0, name:null }
+        const monitoredItem = theSubscription.monitor({
+            nodeId: resolveNodeId(nodeId),
+            attributeId: AttributeIds.Value
+            //, dataEncoding: { namespaceIndex: 0, name:null }
         },
-        { 
-            samplingInterval: 100,
-            discardOldest: true,
-            queueSize: 10 
-        });
+            {
+                samplingInterval: 100,
+                discardOldest: true,
+                queueSize: 10
+            });
         console.log("-------------------------------------");
 
-        // subscription.on("item_added",function(monitoredItem){
-        //xx monitoredItem.on("initialized",function(){ });
-        //xx monitoredItem.on("terminated",function(value){ });
-        
-
-        monitoredItem.on("changed",function(value){
-           console.log(" New Value = ",value.toString());
+        monitoredItem.on("changed", function(value) {
+            console.log(" New Value = ", value.toString());
         });
 
     },
@@ -113,8 +117,7 @@ async.series([
     //
     function(callback) {
         console.log(" closing session");
-        the_session.close(function(err){
-
+        theSession.close(function(err) {
             console.log(" session closed");
             callback();
         });
@@ -124,10 +127,10 @@ async.series([
 ],
     function(err) {
         if (err) {
-            console.log(" failure ",err);
+            console.log(" failure ", err);
         } else {
             console.log("done!")
         }
-        client.disconnect(function(){});
-    }) ;
+        client.disconnect(function() { });
+    });
 
