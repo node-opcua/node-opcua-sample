@@ -2,21 +2,23 @@ import {
     resolveNodeId,
     AttributeIds,
     OPCUAClient,
-    ClientSubscription,
     DataValue,
     BrowseResult,
-    ReferenceDescription
+    ReferenceDescription, 
+    TimestampsToReturn, 
+    StatusCode, 
+    StatusCodes,
+    DataType
 } from "node-opcua";
 
 const endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
-
-const nodeId = resolveNodeId("ns=1;s=Temperature");
+const nodeId = "ns=7;s=Scalar_Simulation_Double";
 
 async function main() {
 
     try {
 
-        const client = new OPCUAClient({
+        const client = OPCUAClient.create({
             endpoint_must_exist: false,
             connectionStrategy: {
                 maxRetry: 2,
@@ -36,13 +38,16 @@ async function main() {
         console.log(browseResult.references.map((r: ReferenceDescription) => r.browseName.toString()).join("\n"));
 
         const dataValue = await session.read({ nodeId, attributeId: AttributeIds.Value });
+        if (dataValue.statusCode !== StatusCodes.Good) {
+            console.log("Could not read ", nodeId);
+        }
         console.log(` temperature = ${dataValue.value.toString()}`);
 
         // step 5: install a subscription and monitored item
-        const subscription = new ClientSubscription(session, {
+        const subscription = await  session.createSubscription2({
             requestedPublishingInterval: 1000,
-            requestedLifetimeCount: 10,
-            requestedMaxKeepAliveCount: 2,
+            requestedLifetimeCount: 100,
+            requestedMaxKeepAliveCount: 20,
             maxNotificationsPerPublish: 10,
             publishingEnabled: true,
             priority: 10
@@ -53,7 +58,7 @@ async function main() {
             .on("keepalive", () => console.log("keepalive"))
             .on("terminated", () => console.log("subscription terminated"));
 
-        const monitoredItem = subscription.monitor({
+        const monitoredItem = await subscription.monitor({
             nodeId,
             attributeId: AttributeIds.Value
         },
@@ -61,7 +66,7 @@ async function main() {
                 samplingInterval: 100,
                 discardOldest: true,
                 queueSize: 10
-            });
+            }, TimestampsToReturn.Both);
 
 
         monitoredItem.on("changed", (dataValue: DataValue) => {
@@ -69,8 +74,22 @@ async function main() {
         });
 
         await new Promise((resolve) => setTimeout(resolve, 10000));
-
         await subscription.terminate();
+
+        const statusCode =await session.write({
+            nodeId: "ns=7;s=Scalar_Static_Double",
+            attributeId: AttributeIds.Value,
+            value: {
+                statusCode: StatusCodes.Good,
+                sourceTimestamp: new Date(),
+                value: {
+                    dataType: DataType.Double,
+                    value: 25.0
+                }
+            }
+        });
+        console.log("statusCode = ", statusCode.toString());
+
 
         console.log(" closing session");
         await session.close();

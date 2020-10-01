@@ -2,18 +2,21 @@
 
 const {
     OPCUAClient,
-    resolveNodeId,
     AttributeIds,
-    ClientSubscription
+    ClientSubscription,
+    TimestampsToReturn
 } = require("node-opcua");
 const async = require("async");
 
-const client = new OPCUAClient({ endpoint_must_exist: false });
+const client = OPCUAClient.create({ endpoint_must_exist: false });
 
 const endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
-const nodeId = "ns=1;s=Temperature";
+const nodeId = "ns=7;s=Scalar_Simulation_Double";
 
+/** @type ClientSession */
 let theSession = null;
+
+/** @type ClientSubscription */
 let theSubscription = null;
 async.series([
 
@@ -55,9 +58,12 @@ async.series([
     },
     // step 4 : read a variable
     function(callback) {
-        theSession.readVariableValue(nodeId, function(err, dataValue) {
+        theSession.read({
+            nodeId,
+            attributeId: AttributeIds.Value
+        }, (err, dataValue) => {
             if (!err) {
-                console.log(" temperature = ", dataValue.toString());
+                console.log(" read value = ", dataValue.toString());
             }
             callback(err);
         })
@@ -69,53 +75,55 @@ async.series([
     // create subscription
     function(callback) {
 
-        theSubscription = new ClientSubscription(theSession, {
+        theSession.createSubscription2({
             requestedPublishingInterval: 1000,
             requestedLifetimeCount: 1000,
             requestedMaxKeepAliveCount: 20,
             maxNotificationsPerPublish: 10,
             publishingEnabled: true,
             priority: 10
-        });
-        theSubscription.on("started", function() {
-            console.log("subscription started for 2 seconds - subscriptionId=", theSubscription.subscriptionId);
-        }).on("keepalive", function() {
-            console.log("keepalive");
-        }).on("terminated", function() {
+        }, function(err, subscription) {
+            if (err) { return callback(err); }
+            theSubscription = subscription;
+
+            theSubscription.on("keepalive", function() {
+                console.log("keepalive");
+            }).on("terminated", function() {
+            });
             callback();
         });
 
-
-
-        setTimeout(function() {
-            theSubscription.terminate();
-        }, 10000);
-
-
+    }, function(callback) {
         // install monitored item
         //
-        const monitoredItem = theSubscription.monitor({
-            nodeId: resolveNodeId(nodeId),
+        theSubscription.monitor({
+            nodeId,
             attributeId: AttributeIds.Value
-            //, dataEncoding: { namespaceIndex: 0, name:null }
         },
             {
                 samplingInterval: 100,
                 discardOldest: true,
                 queueSize: 10
+            }, TimestampsToReturn.Both,
+            (err, monitoredItem) => {
+                console.log("-------------------------------------");
+                monitoredItem
+                    .on("changed", function(value) {
+                        console.log(" New Value = ", value.toString());
+                    })
+                    .on("err", (err) => {
+                        console.log("MonitoredItem err =", err.message);
+                    });
+                callback(err);
+
             });
-        console.log("-------------------------------------");
-
-        monitoredItem.on("changed", function(value) {
-            console.log(" New Value = ", value.toString());
-        });
-
-    },
-
-    // ------------------------------------------------
-    // closing session
-    //
-    function(callback) {
+    }, function(callback) {
+        console.log("Waiting 5 seconds")
+        setTimeout(() => {
+            theSubscription.terminate();
+            callback();
+        }, 5000);
+    }, function(callback) {
         console.log(" closing session");
         theSession.close(function(err) {
             console.log(" session closed");
@@ -123,13 +131,13 @@ async.series([
         });
     },
 
-
 ],
     function(err) {
         if (err) {
             console.log(" failure ", err);
+            process.exit(0);
         } else {
-            console.log("done!")
+            console.log("done!");
         }
         client.disconnect(function() { });
     });

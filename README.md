@@ -15,11 +15,16 @@ recent nodejs version (es2017) with async/await support
 
 old nodejs ( version 8.0)
 
-    this version uses the ole callback back mechanism which is not recommanded anymore
-
-
+    this version uses the old callback back mechanism which is not recommended anymore
 
     $ git clone https://github.com/node-opcua/node-opcua-sample
     $ cd node-opcua-sample
     $ npm install
     $ node simple_client.js
+
+
+## More information 
+
+![https://d2sofvawe08yqg.cloudfront.net/node-opcuabyexample/hero2x?1573652947]
+
+The book [NodeOPCUA by example](https://leanpub.com/node-opcuabyexample) provides a comprehensive set of example that goes beyond the simple example provided here.
