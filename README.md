@@ -25,6 +25,6 @@ old nodejs ( version 8.0)
 
 ## More information 
 
-![https://d2sofvawe08yqg.cloudfront.net/node-opcuabyexample/hero2x?1573652947]
+![NodeOPCUA By Example](https://d2sofvawe08yqg.cloudfront.net/node-opcuabyexample/hero2x?1573652947)
 
 The book [NodeOPCUA by example](https://leanpub.com/node-opcuabyexample) provides a comprehensive set of example that goes beyond the simple example provided here.
