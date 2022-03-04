@@ -11,7 +11,7 @@ typescript with async/await support
 
 recent nodejs version (es2017) with async/await support
 
-    $ node simple_client_es18.js
+    $ node simple_client_es8.js
 
 old nodejs ( version 8.0)
 
@@ -22,8 +22,7 @@ old nodejs ( version 8.0)
     $ npm install
     $ node simple_client.js
 
-
-## More information 
+## More information
 
 ![NodeOPCUA By Example](https://d2sofvawe08yqg.cloudfront.net/node-opcuabyexample/hero2x?1573652947)
 
