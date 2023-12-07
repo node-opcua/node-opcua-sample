@@ -19,7 +19,7 @@ async function main() {
     try {
 
         const client = OPCUAClient.create({
-            endpoint_must_exist: false,
+            endpointMustExist: false,
             connectionStrategy: {
                 maxRetry: 2,
                 initialDelay: 2000,
