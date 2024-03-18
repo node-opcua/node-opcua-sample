@@ -8,7 +8,7 @@ const {
 } = require("node-opcua");
 const async = require("async");
 
-const client = OPCUAClient.create({ endpoint_must_exist: false });
+const client = OPCUAClient.create({ endpointMustExist: false });
 
 const endpointUrl = "opc.tcp://opcuademo.sterfive.com:26543";
 const nodeId = "ns=7;s=Scalar_Simulation_Double";
