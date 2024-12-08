@@ -16,15 +16,10 @@
   "author": "Etienne Rossignon",
   "license": "MIT",
   "dependencies": {
-    "@types/node": "^20.11.28",
-    "async": "~3.2.5",
-    "node-opcua": "~2.123.0"
+    "@types/node": "^22.10.1",
+    "async": "~3.2.6",
+    "node-opcua": "~2.138.1"
   },
   "devDependencies": {
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.1.1",
-    "eslint-plugin-standard": "^4.1.0"
   }
 }
